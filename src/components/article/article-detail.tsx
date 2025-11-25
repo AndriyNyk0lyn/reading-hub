@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { CSSProperties, useState } from "react";
 import { Bookmark, BookmarkCheck, ExternalLink, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -14,16 +14,21 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { fetchArticleDetailsClient } from "@/lib/client-articles";
-import ReactMarkdown from "react-markdown";
+import ReactMarkdown, { Components } from "react-markdown";
 import remarkGfm from "remark-gfm";
 import Title from "../ui/title";
 import { normalizeTags } from "@/utils/normalize";
+
+import { Prism as SyntaxHighlighter, SyntaxHighlighterProps } from "react-syntax-highlighter";
+import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface ArticleDetailProps {
   articleId: string;
   initialArticle: Article | null;
   shouldFetchRemote?: boolean;
 }
+
+const Highlighter = SyntaxHighlighter as unknown as React.FC<SyntaxHighlighterProps>;
 
 export function ArticleDetail({
   articleId,
@@ -104,6 +109,40 @@ export function ArticleDetail({
     );
   }
 
+  const codeTheme: { [key: string]: CSSProperties } = oneDark as unknown as { [key: string]: CSSProperties };
+
+  const codeBlockStyle: CSSProperties = {
+    margin: "1rem 0",
+    borderRadius: 6,
+  };
+
+  const markdownComponents: Components = {
+    code({ node, className, children, ...props }) {
+      const match = /language-(\w+)/.exec(className || "");
+
+      if (match) {
+        return (
+          <Highlighter
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            style={codeTheme as any}
+            language={match[1]}
+            PreTag="div"
+            customStyle={codeBlockStyle}
+            {...props}
+          >
+            {String(children).replace(/\n$/, "")}
+          </Highlighter>
+        );
+      }
+
+      return (
+        <code className={className} {...props}>
+          {children}
+        </code>
+      );
+    },
+  };
+
   return (
     <article className="space-y-6">
       <div className="space-y-3">
@@ -156,7 +195,10 @@ export function ArticleDetail({
       <div className="rounded-lg border bg-card px-6 py-6">
         {article.body ? (
           <div className="prose prose-sm dark:prose-invert max-w-none">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            <ReactMarkdown
+              remarkPlugins={[remarkGfm]}
+              components={markdownComponents}
+            >
               {article.body}
             </ReactMarkdown>
           </div>
