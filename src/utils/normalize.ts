@@ -1,4 +1,9 @@
-import { Article, ArticleFilters, DevtoArticle } from "@/types/articles";
+import {
+  Article,
+  ArticleFilters,
+  ArticleState,
+  DevtoArticle,
+} from "@/types/articles";
 
 export function normalizeTags(
   tags: Article["tags"] | string | undefined
@@ -24,11 +29,22 @@ export function normalizeFilters(
         ? undefined
         : (params.source as ArticleFilters["source"]);
   }
+  if (typeof params.state === "string" && params.state !== "all") {
+    const allowedStates: ArticleState[] = ["fresh", "rising"];
+    if (allowedStates.includes(params.state as ArticleState)) {
+      filters.state = params.state as ArticleState;
+    }
+  }
   return filters;
 }
 
 export function toArticle(record: DevtoArticle): Article {
   const tags = normalizeTags(record.tags);
+  const allowedStates: ArticleState[] = ["fresh", "rising"];
+  const state =
+    record.state && allowedStates.includes(record.state as ArticleState)
+      ? (record.state as ArticleState)
+      : undefined;
   return {
     id: record.id.toString(),
     title: record.title,
@@ -39,5 +55,6 @@ export function toArticle(record: DevtoArticle): Article {
     tags,
     publishedAt: record.published_timestamp || record.readable_publish_date,
     source: "devto",
+    state,
   };
 }

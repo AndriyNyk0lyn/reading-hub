@@ -18,6 +18,7 @@ export async function fetchArticlesFromDevto(
   url.searchParams.set("per_page", perPage.toString());
   if (filters.query) url.searchParams.set("search", filters.query);
   if (filters.tag) url.searchParams.set("tag", filters.tag);
+  if (filters.state) url.searchParams.set("state", filters.state);
 
   const headers = new Headers();
   const apiKey = getApiKey();

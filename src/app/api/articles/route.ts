@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 import { fetchArticlesFromDevto } from "@/lib/articles";
-import type { ArticleFilters } from "@/types/articles";
+import type { ArticleFilters, ArticleState } from "@/types/articles";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
@@ -11,11 +11,18 @@ export async function GET(request: Request) {
   const tag = url.searchParams.get("tag");
   const source = url.searchParams.get("source");
   const limitParam = url.searchParams.get("limit");
+  const state = url.searchParams.get("state");
 
   if (query) filters.query = query;
   if (tag) filters.tag = tag;
   if (source && source !== "all") {
     filters.source = source as ArticleFilters["source"];
+  }
+  if (state && state !== "all") {
+    const allowedStates: ArticleState[] = ["fresh", "rising"];
+    if (allowedStates.includes(state as ArticleState)) {
+      filters.state = state as ArticleState;
+    }
   }
   if (limitParam) {
     const parsed = Number(limitParam);

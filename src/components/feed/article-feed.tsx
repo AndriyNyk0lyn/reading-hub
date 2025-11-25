@@ -4,8 +4,11 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { parseAsString, useQueryState } from "nuqs";
 
-import type { Article, ArticleFilters } from "@/types/articles";
-import { Input } from "@/components/ui/input";
+import type {
+  Article,
+  ArticleFilters,
+  ArticleStateFilterValue,
+} from "@/types/articles";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -13,6 +16,7 @@ import { ArticleCard } from "./article-card";
 import { useOfflineLibrary } from "@/hooks/useOfflineLibrary";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { normalizeTags } from "@/utils/normalize";
+import { ArticleStateFilter } from "@/components/filters/state-filter";
 
 interface ArticleFeedProps {
   initialArticles: Article[];
@@ -21,7 +25,7 @@ interface ArticleFeedProps {
 
 async function clientFetchArticles(
   filters: ArticleFilters,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<Article[]> {
   const query = new URLSearchParams();
   if (filters.query) query.set("query", filters.query);
@@ -29,9 +33,14 @@ async function clientFetchArticles(
   if (filters.source && filters.source !== "all") {
     query.set("source", filters.source);
   }
+  if (filters.state) {
+    query.set("state", filters.state);
+  }
 
   const queryString = query.toString();
-  const apiPath = queryString ? `/api/articles?${queryString}` : "/api/articles";
+  const apiPath = queryString
+    ? `/api/articles?${queryString}`
+    : "/api/articles";
 
   const response = await fetch(apiPath, {
     cache: "no-store",
@@ -52,35 +61,34 @@ export function ArticleFeed({
   const isOnline = useOnlineStatus();
   const { savedArticles, saveArticle, removeArticle } = useOfflineLibrary();
 
-  const savedIds = useMemo(
-    () => new Set(savedArticles.map((article) => article.id)),
-    [savedArticles],
-  );
+  const savedIds = new Set(savedArticles.map((article) => article.id));
 
-  const [query, setQuery] = useQueryState(
-    "q",
-    parseAsString.withDefault(initialFilters.query ?? ""),
-  );
   const [tag, setTag] = useQueryState(
     "tag",
-    parseAsString.withDefault(initialFilters.tag ?? ""),
+    parseAsString.withDefault(initialFilters.tag ?? "")
   );
   const [source, setSource] = useQueryState(
     "source",
-    parseAsString.withDefault("all"),
+    parseAsString.withDefault("all")
+  );
+  const [state, setState] = useQueryState(
+    "state",
+    parseAsString.withDefault("all")
   );
 
   const activeFilters = useMemo<ArticleFilters>(() => {
     return {
-      query: query || undefined,
       tag: tag || undefined,
-      source: source === "all" ? undefined : (source as ArticleFilters["source"]),
+      source:
+        source === "all" ? undefined : (source as ArticleFilters["source"]),
+      state:
+        state === "all" ? undefined : (state as ArticleFilters["state"]),
     };
-  }, [query, tag, source]);
+  }, [tag, source, state]);
 
   const shouldUseInitialData =
-    (activeFilters.query ?? "") === (initialFilters.query ?? "") &&
-    (activeFilters.tag ?? "") === (initialFilters.tag ?? "");
+    (activeFilters.tag ?? "") === (initialFilters.tag ?? "") &&
+    (activeFilters.state ?? "") === (initialFilters.state ?? "");
 
   const queryResult = useQuery({
     queryKey: ["articles", activeFilters],
@@ -89,7 +97,7 @@ export function ArticleFeed({
     placeholderData: (previousData) => previousData,
   });
 
-  const articles = queryResult.data ?? [];
+  const articles = useMemo(() => queryResult.data ?? [], [queryResult.data]);
 
   const suggestedTags = useMemo(() => {
     const pool = new Set<string>();
@@ -104,22 +112,6 @@ export function ArticleFeed({
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 rounded-lg border bg-card px-4 py-4">
-        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-          <Input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search articles..."
-            className="sm:flex-1"
-          />
-          <Button
-            variant="outline"
-            onClick={() => queryResult.refetch()}
-            disabled={queryResult.isFetching}
-          >
-            Refresh
-          </Button>
-        </div>
-
         <Tabs
           value={source || "all"}
           onValueChange={(next) => setSource(next)}
@@ -131,6 +123,11 @@ export function ArticleFeed({
           </TabsList>
         </Tabs>
 
+        <ArticleStateFilter
+          value={state as ArticleStateFilterValue}
+          onValueChange={(next) => setState(next)}
+        />
+
         {suggestedTags.length > 0 && (
           <div className="flex flex-wrap gap-2 text-sm">
             <span className="text-muted-foreground">Popular tags:</span>
@@ -140,9 +137,7 @@ export function ArticleFeed({
                 variant={tag === tagOption ? "default" : "secondary"}
                 size="sm"
                 onClick={() =>
-                  setTag((current) =>
-                    current === tagOption ? "" : tagOption,
-                  )
+                  setTag((current) => (current === tagOption ? "" : tagOption))
                 }
               >
                 #{tagOption}
@@ -188,11 +183,10 @@ export function ArticleFeed({
 
       {!queryResult.isFetching && !articles.length && (
         <div className="rounded-md border px-6 py-10 text-center text-muted-foreground">
-          No articles match that query yet. Try a different search or browse your
-          saved stories.
+          No articles match that query yet. Try a different search or browse
+          your saved stories.
         </div>
       )}
     </section>
   );
 }
-

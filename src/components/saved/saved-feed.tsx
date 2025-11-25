@@ -5,7 +5,6 @@ import { BookmarkMinus } from "lucide-react";
 import Link from "next/link";
 
 import { useOfflineLibrary } from "@/hooks/useOfflineLibrary";
-import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -19,11 +18,14 @@ import { Badge } from "@/components/ui/badge";
 
 import { normalizeTags } from "@/utils/normalize";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import { ArticleStateFilter } from "@/components/filters/state-filter";
+import type { ArticleStateFilterValue } from "@/types/articles";
 
 export function SavedFeed() {
   const { savedArticles, removeArticle } = useOfflineLibrary();
-  const [query, setQuery] = useState("");
   const [tag, setTag] = useState<string | null>(null);
+  const [stateFilter, setStateFilter] =
+    useState<ArticleStateFilterValue>("all");
   const isOnline = useOnlineStatus();
   const availableTags = useMemo(() => {
     const pool = new Set<string>();
@@ -37,22 +39,19 @@ export function SavedFeed() {
 
   const filteredArticles = useMemo(() => {
     return savedArticles.filter((article) => {
-      const matchesQuery =
-        !query ||
-        article.title.toLowerCase().includes(query.toLowerCase()) ||
-        article.description?.toLowerCase().includes(query.toLowerCase());
+      const matchesState =
+        stateFilter === "all" || article.state === stateFilter;
       const matchesTag = !tag || normalizeTags(article.tags).includes(tag);
-      return matchesQuery && matchesTag;
+      return matchesState && matchesTag;
     });
-  }, [savedArticles, query, tag]);
+  }, [savedArticles, stateFilter, tag]);
 
   return (
     <section className="space-y-6">
       <div className="flex flex-col gap-4 rounded-lg border bg-card px-4 py-4">
-        <Input
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="Search saved articles"
+        <ArticleStateFilter
+          value={stateFilter}
+          onValueChange={setStateFilter}
         />
         {availableTags.length > 0 && (
           <div className="flex flex-wrap gap-2">

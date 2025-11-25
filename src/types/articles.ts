@@ -1,5 +1,7 @@
 export type ArticleSource = "devto" | "hn" | "jsonplaceholder";
 
+export type ArticleState = "fresh" | "rising";
+
 export interface Article {
   id: string;
   title: string;
@@ -10,6 +12,7 @@ export interface Article {
   tags: string[];
   publishedAt?: string;
   source: ArticleSource;
+  state?: ArticleState;
 }
 
 export interface SavedArticle extends Article {
@@ -26,7 +29,10 @@ export interface ArticleFilters {
   query?: string;
   tag?: string;
   source?: ArticleSource | "all";
+  state?: ArticleState;
 }
+
+export type ArticleStateFilterValue = ArticleState | "all";
 
 export interface DevtoArticle {
   id: number;
@@ -42,4 +48,5 @@ export interface DevtoArticle {
     name?: string;
     username?: string;
   };
+  state?: string;
 }

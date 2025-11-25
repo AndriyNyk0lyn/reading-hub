@@ -19,7 +19,10 @@ import remarkGfm from "remark-gfm";
 import Title from "../ui/title";
 import { normalizeTags } from "@/utils/normalize";
 
-import { Prism as SyntaxHighlighter, SyntaxHighlighterProps } from "react-syntax-highlighter";
+import {
+  Prism as SyntaxHighlighter,
+  SyntaxHighlighterProps,
+} from "react-syntax-highlighter";
 import { oneDark } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 interface ArticleDetailProps {
@@ -28,7 +31,8 @@ interface ArticleDetailProps {
   shouldFetchRemote?: boolean;
 }
 
-const Highlighter = SyntaxHighlighter as unknown as React.FC<SyntaxHighlighterProps>;
+const Highlighter =
+  SyntaxHighlighter as unknown as React.FC<SyntaxHighlighterProps>;
 
 export function ArticleDetail({
   articleId,
@@ -109,11 +113,17 @@ export function ArticleDetail({
     );
   }
 
-  const codeTheme: { [key: string]: CSSProperties } = oneDark as unknown as { [key: string]: CSSProperties };
+  const codeTheme: { [key: string]: CSSProperties } = oneDark as unknown as {
+    [key: string]: CSSProperties;
+  };
 
   const codeBlockStyle: CSSProperties = {
     margin: "1rem 0",
     borderRadius: 6,
+    maxWidth: "100%",
+    overflowX: "auto",
+    whiteSpace: "pre",
+    fontSize: "0.8rem",
   };
 
   const markdownComponents: Components = {
@@ -128,6 +138,7 @@ export function ArticleDetail({
             language={match[1]}
             PreTag="div"
             customStyle={codeBlockStyle}
+            className="not-prose"
             {...props}
           >
             {String(children).replace(/\n$/, "")}
@@ -194,7 +205,7 @@ export function ArticleDetail({
 
       <div className="rounded-lg border bg-card px-6 py-6">
         {article.body ? (
-          <div className="prose prose-sm dark:prose-invert max-w-none">
+          <div className="prose prose-sm dark:prose-invert max-w-none overflow-x-auto">
             <ReactMarkdown
               remarkPlugins={[remarkGfm]}
               components={markdownComponents}
