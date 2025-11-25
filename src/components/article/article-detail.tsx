@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { fetchArticleDetailsClient } from "@/lib/client-articles";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 
 interface ArticleDetailProps {
   articleId: string;
@@ -21,7 +23,9 @@ interface ArticleDetailProps {
   shouldFetchRemote?: boolean;
 }
 
-export function normalizeTags(tags: Article["tags"] | string | undefined): string[] {
+export function normalizeTags(
+  tags: Article["tags"] | string | undefined
+): string[] {
   if (!tags) return [];
   if (Array.isArray(tags)) {
     return tags.filter(Boolean);
@@ -61,13 +65,6 @@ export function ArticleDetail({
   const article = savedArticle ?? remoteArticle ?? null;
 
   console.log("article", article);
-
-  const bodySections = useMemo(() => {
-    return article?.body
-      ?.split("\n")
-      .map((section) => section.trim())
-      .filter(Boolean);
-  }, [article]);
 
   async function handleSaveToggle() {
     if (!article) return;
@@ -111,7 +108,8 @@ export function ArticleDetail({
           </Button>
           {!allowRemoteFetch && (
             <p className="text-xs text-muted-foreground">
-              Saved copy not found yet. Connect to the internet to fetch it once.
+              Saved copy not found yet. Connect to the internet to fetch it
+              once.
             </p>
           )}
         </div>
@@ -168,13 +166,13 @@ export function ArticleDetail({
         </Button>
       </div>
 
-      <div className="space-y-4 rounded-lg border bg-card px-6 py-6 leading-relaxed">
-        {bodySections?.length ? (
-          bodySections.map((paragraph, index) => (
-            <p key={`paragraph-${index}`} className="text-muted-foreground">
-              {paragraph}
-            </p>
-          ))
+      <div className="rounded-lg border bg-card px-6 py-6">
+        {article.body ? (
+          <div className="prose prose-sm dark:prose-invert max-w-none">
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {article.body}
+            </ReactMarkdown>
+          </div>
         ) : (
           <p className="text-muted-foreground">
             This article body is not available yet. Open the original article to

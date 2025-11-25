@@ -110,15 +110,13 @@ export function SavedFeed() {
                 </div>
               </CardContent>
               <CardFooter className="flex flex-col gap-3 sm:flex-row sm:justify-between">
-                {isOnline ? (
-                  <Button asChild size="sm" variant="outline">
+                <Button asChild size="sm" variant="outline">
+                  {isOnline ? (
                     <Link href={`/article/${article.id}`}>Open</Link>
-                  </Button>
-                ) : (
-                  <Button asChild size="sm" variant="outline">
+                  ) : (
                     <a href={`/article/${article.id}`}>Open</a>
-                  </Button>
-                )}
+                  )}
+                </Button>
                 <Button
                   size="sm"
                   variant="destructive"
