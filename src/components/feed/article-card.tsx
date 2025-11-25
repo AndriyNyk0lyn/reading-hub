@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { normalizeTags } from "../article/article-detail";
+import { normalizeTags } from "@/utils/normalize";
 
 interface ArticleCardProps {
   article: Article;

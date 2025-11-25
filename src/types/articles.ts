@@ -28,3 +28,18 @@ export interface ArticleFilters {
   source?: ArticleSource | "all";
 }
 
+export interface DevtoArticle {
+  id: number;
+  title: string;
+  description?: string;
+  body_markdown?: string;
+  url: string;
+  tags: string;
+  readable_publish_date?: string;
+  published_timestamp?: string;
+  tag_list?: string[];
+  user?: {
+    name?: string;
+    username?: string;
+  };
+}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Bookmark, BookmarkCheck, ExternalLink, RefreshCw } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 
@@ -16,24 +16,13 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import { fetchArticleDetailsClient } from "@/lib/client-articles";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import Title from "../ui/title";
+import { normalizeTags } from "@/utils/normalize";
 
 interface ArticleDetailProps {
   articleId: string;
   initialArticle: Article | null;
   shouldFetchRemote?: boolean;
-}
-
-export function normalizeTags(
-  tags: Article["tags"] | string | undefined
-): string[] {
-  if (!tags) return [];
-  if (Array.isArray(tags)) {
-    return tags.filter(Boolean);
-  }
-  return tags
-    .split(",")
-    .map((tag) => tag.trim())
-    .filter(Boolean);
 }
 
 export function ArticleDetail({
@@ -63,8 +52,6 @@ export function ArticleDetail({
   });
 
   const article = savedArticle ?? remoteArticle ?? null;
-
-  console.log("article", article);
 
   async function handleSaveToggle() {
     if (!article) return;
@@ -126,7 +113,7 @@ export function ArticleDetail({
             <Badge variant="secondary">Saved for offline reading</Badge>
           )}
         </div>
-        <h1 className="text-3xl font-semibold">{article.title}</h1>
+        <Title>{article.title}</Title>
         <p className="text-muted-foreground">
           By {article.author}
           {article.publishedAt

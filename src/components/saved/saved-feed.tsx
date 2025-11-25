@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 
-import { normalizeTags } from "../article/article-detail";
+import { normalizeTags } from "@/utils/normalize";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 export function SavedFeed() {

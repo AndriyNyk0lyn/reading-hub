@@ -1,10 +1,11 @@
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
+import Title from "@/components/ui/title";
 
 export default function OfflinePage() {
   return (
     <div className="space-y-6 text-center">
-      <h1 className="text-3xl font-semibold">You are offline</h1>
+      <Title>You are offline</Title>
       <p className="text-muted-foreground">
         The app shell is still available, but this page could not load new data.
         Jump into your saved library or try again once the connection returns.

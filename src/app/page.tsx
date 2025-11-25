@@ -1,39 +1,17 @@
 import { ArticleFeed } from "@/components/feed/article-feed";
 import { fetchArticlesFromDevto } from "@/lib/articles";
-import type { Article, ArticleFilters } from "@/types/articles";
-
-type SearchParams =
-  | Record<string, string | string[] | undefined>
-  | Promise<Record<string, string | string[] | undefined>>;
-
-function normalizeFilters(
-  params: Record<string, string | string[] | undefined>,
-) {
-  const filters: ArticleFilters = {};
-  if (typeof params.query === "string") filters.query = params.query;
-  if (typeof params.tag === "string") filters.tag = params.tag;
-  if (typeof params.source === "string") {
-    filters.source =
-      params.source === "all" ? undefined : (params.source as ArticleFilters["source"]);
-  }
-  return filters;
-}
-
-function isPromiseLike(
-  value: SearchParams,
-): value is Promise<Record<string, string | string[] | undefined>> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "then" in value &&
-    typeof (value as PromiseLike<unknown>).then === "function"
-  );
-}
+import type { Article } from "@/types/articles";
+import { normalizeFilters } from "@/utils/normalize";
+import Title from "@/components/ui/title";
+import { isPromiseLike, SearchParams } from "@/utils/isPromiseLike";
 
 async function resolveSearchParams(input?: SearchParams) {
   if (!input) return {};
   if (isPromiseLike(input)) {
-    return ((await input) ?? {}) as Record<string, string | string[] | undefined>;
+    return ((await input) ?? {}) as Record<
+      string,
+      string | string[] | undefined
+    >;
   }
   return input as Record<string, string | string[] | undefined>;
 }
@@ -56,7 +34,7 @@ export default async function Home({
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-semibold">Reading feed</h1>
+        <Title>Reading feed</Title>
         <p className="text-muted-foreground">
           Browse the latest Dev.to stories, search by keyword, and save anything
           to read offline later.

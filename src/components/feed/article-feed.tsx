@@ -12,7 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArticleCard } from "./article-card";
 import { useOfflineLibrary } from "@/hooks/useOfflineLibrary";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { normalizeTags } from "../article/article-detail";
+import { normalizeTags } from "@/utils/normalize";
 
 interface ArticleFeedProps {
   initialArticles: Article[];

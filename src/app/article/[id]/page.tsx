@@ -1,35 +1,28 @@
 import { ArticleDetail } from "@/components/article/article-detail";
 import { fetchArticleByIdFromDevto } from "@/lib/articles";
-
-type Params = { id: string } | Promise<{ id: string }>;
-
-async function resolveParams(params: Params) {
-  if (
-    typeof params === "object" &&
-    params !== null &&
-    "then" in params &&
-    typeof (params as Promise<unknown>).then === "function"
-  ) {
-    return params as Promise<{ id: string }>;
-  }
-  return params as { id: string };
-}
+import { isPromiseLike, SearchParams } from "@/utils/isPromiseLike";
 
 export default async function ArticlePage({
   params,
 }: {
-  params: Params;
+  params: SearchParams;
 }) {
-  const resolvedParams = await resolveParams(params);
+  const resolvedParams = (isPromiseLike(params) ? await params : params) ?? {
+    id: "",
+  };
   let initialArticle = null;
   try {
-    initialArticle = await fetchArticleByIdFromDevto(resolvedParams.id);
+    initialArticle = await fetchArticleByIdFromDevto(
+      resolvedParams.id as string
+    );
   } catch (error) {
     console.error("Failed to fetch article details", error);
   }
 
   return (
-    <ArticleDetail articleId={resolvedParams.id} initialArticle={initialArticle} />
+    <ArticleDetail
+      articleId={resolvedParams.id as string}
+      initialArticle={initialArticle}
+    />
   );
 }
-

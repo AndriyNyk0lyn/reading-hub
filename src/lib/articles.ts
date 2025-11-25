@@ -1,52 +1,13 @@
 import "server-only";
 
-import { Article, ArticleFilters } from "@/types/articles";
-
-const DEVTO_BASE_URL = "https://dev.to/api/articles";
-
-export interface DevtoArticle {
-  id: number;
-  title: string;
-  description?: string;
-  body_markdown?: string;
-  url: string;
-  tags: string;
-  readable_publish_date?: string;
-  published_timestamp?: string;
-  tag_list?: string[];
-  user?: {
-    name?: string;
-    username?: string;
-  };
-}
-
-function getApiKey(): string | undefined {
-  return process.env.DEVTO_API_KEY || process.env.NEXT_PUBLIC_DEVTO_API_KEY;
-}
-
-export function toArticle(record: DevtoArticle): Article {
-  const tags = record.tag_list?.length
-    ? record.tag_list
-    : record.tags
-        ?.split(",")
-        .map((tag) => tag.trim())
-        .filter(Boolean) ?? [];
-  return {
-    id: record.id.toString(),
-    title: record.title,
-    description: record.description,
-    body: record.body_markdown,
-    url: record.url,
-    author: record.user?.name || record.user?.username || "Unknown",
-    tags,
-    publishedAt: record.published_timestamp || record.readable_publish_date,
-    source: "devto",
-  };
-}
+import { Article, ArticleFilters, DevtoArticle } from "@/types/articles";
+import { toArticle } from "@/utils/normalize";
+import { getApiKey } from "@/utils/getApiKey";
+import { DEVTO_BASE_URL } from "@/app/constants/api";
 
 export async function fetchArticlesFromDevto(
   filters: ArticleFilters & { limit?: number },
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<Article[]> {
   if (filters.source && filters.source !== "devto") {
     return [];
@@ -78,7 +39,7 @@ export async function fetchArticlesFromDevto(
 
 export async function fetchArticleByIdFromDevto(
   id: string,
-  signal?: AbortSignal,
+  signal?: AbortSignal
 ): Promise<Article | null> {
   const url = `${DEVTO_BASE_URL}/${id}`;
   const headers = new Headers();
@@ -91,4 +52,3 @@ export async function fetchArticleByIdFromDevto(
   const payload = (await response.json()) as DevtoArticle;
   return toArticle(payload);
 }
-

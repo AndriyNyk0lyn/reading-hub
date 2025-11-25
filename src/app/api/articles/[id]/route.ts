@@ -1,39 +1,26 @@
 import { NextResponse } from "next/server";
-
 import { fetchArticleByIdFromDevto } from "@/lib/articles";
-
-interface Params {
-  id: string;
-}
-
-function isPromiseLike(
-  value: Params | Promise<Params>,
-): value is Promise<Params> {
-  return (
-    typeof value === "object" &&
-    value !== null &&
-    "then" in value &&
-    typeof (value as PromiseLike<Params>).then === "function"
-  );
-}
+import { SearchParams, isPromiseLike } from "@/utils/isPromiseLike";
 
 export async function GET(
   _request: Request,
-  context: { params: Params | Promise<Params> },
+  context: { params: SearchParams | Promise<SearchParams> }
 ) {
-  const params = (isPromiseLike(context.params)
+  const params = (isPromiseLike(context.params as SearchParams)
     ? await context.params
     : context.params) ?? { id: "" };
 
-  if (!params.id) {
+  if (!(params as { id: string }).id) {
     return NextResponse.json(
       { message: "Article id is required" },
-      { status: 400 },
+      { status: 400 }
     );
   }
 
   try {
-    const article = await fetchArticleByIdFromDevto(params.id);
+    const article = await fetchArticleByIdFromDevto(
+      (params as { id: string }).id
+    );
     if (!article) {
       return NextResponse.json({ message: "Not found" }, { status: 404 });
     }
@@ -45,8 +32,7 @@ export async function GET(
   } catch (error) {
     return NextResponse.json(
       { message: "Unable to fetch article" },
-      { status: 500 },
+      { status: 500 }
     );
   }
 }
-
