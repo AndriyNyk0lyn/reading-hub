@@ -1,21 +1,21 @@
-import React from "react";
-import { cn } from "@/lib/utils";
+import type React from "react"
+import { cn } from "@/lib/utils"
 
 type Props = {
-  children: React.ReactNode;
-  className?: string;
-};
+	children: React.ReactNode
+	className?: string
+}
 
 const Title = ({
-  children,
-  className,
-  ...props
+	children,
+	className,
+	...props
 }: Props & React.HTMLAttributes<HTMLHeadingElement>) => {
-  return (
-    <h1 className={cn("text-3xl font-semibold", className)} {...props}>
-      {children}
-    </h1>
-  );
-};
+	return (
+		<h1 className={cn("text-3xl font-semibold", className)} {...props}>
+			{children}
+		</h1>
+	)
+}
 
-export default Title;
+export default Title

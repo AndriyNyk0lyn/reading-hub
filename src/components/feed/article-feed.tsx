@@ -1,192 +1,164 @@
-"use client";
+"use client"
 
-import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { parseAsString, useQueryState } from "nuqs";
-
-import type {
-  Article,
-  ArticleFilters,
-  ArticleStateFilterValue,
-} from "@/types/articles";
-import { Button } from "@/components/ui/button";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Skeleton } from "@/components/ui/skeleton";
-import { ArticleCard } from "./article-card";
-import { useOfflineLibrary } from "@/hooks/useOfflineLibrary";
-import { useOnlineStatus } from "@/hooks/useOnlineStatus";
-import { normalizeTags } from "@/utils/normalize";
-import { ArticleStateFilter } from "@/components/filters/state-filter";
+import { useQuery } from "@tanstack/react-query"
+import { parseAsString, useQueryState } from "nuqs"
+import { useMemo } from "react"
+import { ArticleStateFilter } from "@/components/filters/state-filter"
+import { Button } from "@/components/ui/button"
+import { Skeleton } from "@/components/ui/skeleton"
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useOfflineLibrary } from "@/hooks/useOfflineLibrary"
+import { useOnlineStatus } from "@/hooks/useOnlineStatus"
+import type { Article, ArticleFilters, ArticleStateFilterValue } from "@/types/articles"
+import { normalizeTags } from "@/utils/normalize"
+import { ArticleCard } from "./article-card"
 
 interface ArticleFeedProps {
-  initialArticles: Article[];
-  initialFilters: ArticleFilters;
+	initialArticles: Article[]
+	initialFilters: ArticleFilters
 }
 
 async function clientFetchArticles(
-  filters: ArticleFilters,
-  signal?: AbortSignal
+	filters: ArticleFilters,
+	signal?: AbortSignal,
 ): Promise<Article[]> {
-  const query = new URLSearchParams();
-  if (filters.query) query.set("query", filters.query);
-  if (filters.tag) query.set("tag", filters.tag);
-  if (filters.source && filters.source !== "all") {
-    query.set("source", filters.source);
-  }
-  if (filters.state) {
-    query.set("state", filters.state);
-  }
+	const query = new URLSearchParams()
+	if (filters.query) query.set("query", filters.query)
+	if (filters.tag) query.set("tag", filters.tag)
+	if (filters.source && filters.source !== "all") {
+		query.set("source", filters.source)
+	}
+	if (filters.state) {
+		query.set("state", filters.state)
+	}
 
-  const queryString = query.toString();
-  const apiPath = queryString
-    ? `/api/articles?${queryString}`
-    : "/api/articles";
+	const queryString = query.toString()
+	const apiPath = queryString ? `/api/articles?${queryString}` : "/api/articles"
 
-  const response = await fetch(apiPath, {
-    cache: "no-store",
-    signal,
-  });
+	const response = await fetch(apiPath, {
+		cache: "no-store",
+		signal,
+	})
 
-  if (!response.ok) {
-    throw new Error("Unable to load articles");
-  }
+	if (!response.ok) {
+		throw new Error("Unable to load articles")
+	}
 
-  return (await response.json()) as Article[];
+	return (await response.json()) as Article[]
 }
 
-export function ArticleFeed({
-  initialArticles,
-  initialFilters,
-}: ArticleFeedProps) {
-  const isOnline = useOnlineStatus();
-  const { savedArticles, saveArticle, removeArticle } = useOfflineLibrary();
+export function ArticleFeed({ initialArticles, initialFilters }: ArticleFeedProps) {
+	const isOnline = useOnlineStatus()
+	const { savedArticles, saveArticle, removeArticle } = useOfflineLibrary()
 
-  const savedIds = new Set(savedArticles.map((article) => article.id));
+	const savedIds = new Set(savedArticles.map((article) => article.id))
 
-  const [tag, setTag] = useQueryState(
-    "tag",
-    parseAsString.withDefault(initialFilters.tag ?? "")
-  );
-  const [source, setSource] = useQueryState(
-    "source",
-    parseAsString.withDefault("all")
-  );
-  const [state, setState] = useQueryState(
-    "state",
-    parseAsString.withDefault("all")
-  );
+	const [tag, setTag] = useQueryState("tag", parseAsString.withDefault(initialFilters.tag ?? ""))
+	const [source, setSource] = useQueryState("source", parseAsString.withDefault("all"))
+	const [state, setState] = useQueryState("state", parseAsString.withDefault("all"))
 
-  const activeFilters = useMemo<ArticleFilters>(() => {
-    return {
-      tag: tag || undefined,
-      source:
-        source === "all" ? undefined : (source as ArticleFilters["source"]),
-      state:
-        state === "all" ? undefined : (state as ArticleFilters["state"]),
-    };
-  }, [tag, source, state]);
+	const activeFilters = useMemo<ArticleFilters>(() => {
+		return {
+			tag: tag || undefined,
+			source: source === "all" ? undefined : (source as ArticleFilters["source"]),
+			state: state === "all" ? undefined : (state as ArticleFilters["state"]),
+		}
+	}, [tag, source, state])
 
-  const shouldUseInitialData =
-    (activeFilters.tag ?? "") === (initialFilters.tag ?? "") &&
-    (activeFilters.state ?? "") === (initialFilters.state ?? "");
+	const shouldUseInitialData =
+		(activeFilters.tag ?? "") === (initialFilters.tag ?? "") &&
+		(activeFilters.state ?? "") === (initialFilters.state ?? "")
 
-  const queryResult = useQuery({
-    queryKey: ["articles", activeFilters],
-    queryFn: ({ signal }) => clientFetchArticles(activeFilters, signal),
-    initialData: shouldUseInitialData ? initialArticles : undefined,
-    placeholderData: (previousData) => previousData,
-  });
+	const queryResult = useQuery({
+		queryKey: ["articles", activeFilters],
+		queryFn: ({ signal }) => clientFetchArticles(activeFilters, signal),
+		initialData: shouldUseInitialData ? initialArticles : undefined,
+		placeholderData: (previousData) => previousData,
+	})
 
-  const articles = useMemo(() => queryResult.data ?? [], [queryResult.data]);
+	const articles = useMemo(() => queryResult.data ?? [], [queryResult.data])
 
-  const suggestedTags = useMemo(() => {
-    const pool = new Set<string>();
-    articles.forEach((article) => {
-      normalizeTags(article.tags).forEach((articleTag) => {
-        if (articleTag) pool.add(articleTag);
-      });
-    });
-    return Array.from(pool).slice(0, 8);
-  }, [articles]);
+	const suggestedTags = useMemo(() => {
+		const pool = new Set<string>()
+		articles.forEach((article) => {
+			normalizeTags(article.tags).forEach((articleTag) => {
+				if (articleTag) pool.add(articleTag)
+			})
+		})
+		return Array.from(pool).slice(0, 8)
+	}, [articles])
 
-  return (
-    <section className="space-y-6">
-      <div className="flex flex-col gap-4 rounded-lg border bg-card px-4 py-4">
-        <Tabs
-          value={source || "all"}
-          onValueChange={(next) => setSource(next)}
-          className="w-full"
-        >
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="all">All sources</TabsTrigger>
-            <TabsTrigger value="devto">Dev.to</TabsTrigger>
-          </TabsList>
-        </Tabs>
+	return (
+		<section className="space-y-6">
+			<div className="flex flex-col gap-4 rounded-lg border bg-card px-4 py-4">
+				<Tabs value={source || "all"} onValueChange={(next) => setSource(next)} className="w-full">
+					<TabsList className="grid w-full grid-cols-2">
+						<TabsTrigger value="all">All sources</TabsTrigger>
+						<TabsTrigger value="devto">Dev.to</TabsTrigger>
+					</TabsList>
+				</Tabs>
 
-        <ArticleStateFilter
-          value={state as ArticleStateFilterValue}
-          onValueChange={(next) => setState(next)}
-        />
+				<ArticleStateFilter
+					value={state as ArticleStateFilterValue}
+					onValueChange={(next) => setState(next)}
+				/>
 
-        {suggestedTags.length > 0 && (
-          <div className="flex flex-wrap gap-2 text-sm">
-            <span className="text-muted-foreground">Popular tags:</span>
-            {suggestedTags.map((tagOption) => (
-              <Button
-                key={tagOption}
-                variant={tag === tagOption ? "default" : "secondary"}
-                size="sm"
-                onClick={() =>
-                  setTag((current) => (current === tagOption ? "" : tagOption))
-                }
-              >
-                #{tagOption}
-              </Button>
-            ))}
-            {tag && (
-              <Button variant="ghost" size="sm" onClick={() => setTag("")}>
-                Clear tag
-              </Button>
-            )}
-          </div>
-        )}
-      </div>
+				{suggestedTags.length > 0 && (
+					<div className="flex flex-wrap gap-2 text-sm">
+						<span className="text-muted-foreground">Popular tags:</span>
+						{suggestedTags.map((tagOption) => (
+							<Button
+								key={tagOption}
+								variant={tag === tagOption ? "default" : "secondary"}
+								size="sm"
+								onClick={() => setTag((current) => (current === tagOption ? "" : tagOption))}
+							>
+								#{tagOption}
+							</Button>
+						))}
+						{tag && (
+							<Button variant="ghost" size="sm" onClick={() => setTag("")}>
+								Clear tag
+							</Button>
+						)}
+					</div>
+				)}
+			</div>
 
-      {!isOnline && !articles.length && (
-        <p className="text-sm text-muted-foreground">
-          You are offline and no articles are cached yet. Try again when back
-          online or open your saved items.
-        </p>
-      )}
+			{!isOnline && !articles.length && (
+				<p className="text-sm text-muted-foreground">
+					You are offline and no articles are cached yet. Try again when back online or open your
+					saved items.
+				</p>
+			)}
 
-      {queryResult.isError && (
-        <div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
-          Unable to load the feed. Please try again shortly.
-        </div>
-      )}
+			{queryResult.isError && (
+				<div className="rounded-md border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+					Unable to load the feed. Please try again shortly.
+				</div>
+			)}
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {queryResult.isFetching && !articles.length
-          ? Array.from({ length: 4 }).map((_, index) => (
-              <Skeleton key={`skeleton-${index}`} className="h-44 w-full" />
-            ))
-          : articles.map((article) => (
-              <ArticleCard
-                key={article.id}
-                article={article}
-                isSaved={savedIds.has(article.id)}
-                onSave={() => saveArticle(article)}
-                onRemove={() => removeArticle(article.id)}
-              />
-            ))}
-      </div>
+			<div className="grid gap-4 md:grid-cols-2">
+				{queryResult.isFetching && !articles.length
+					? Array.from({ length: 4 }).map((_, index) => (
+							<Skeleton key={`skeleton-${index}`} className="h-44 w-full" />
+						))
+					: articles.map((article) => (
+							<ArticleCard
+								key={article.id}
+								article={article}
+								isSaved={savedIds.has(article.id)}
+								onSave={() => saveArticle(article)}
+								onRemove={() => removeArticle(article.id)}
+							/>
+						))}
+			</div>
 
-      {!queryResult.isFetching && !articles.length && (
-        <div className="rounded-md border px-6 py-10 text-center text-muted-foreground">
-          No articles match that query yet. Try a different search or browse
-          your saved stories.
-        </div>
-      )}
-    </section>
-  );
+			{!queryResult.isFetching && !articles.length && (
+				<div className="rounded-md border px-6 py-10 text-center text-muted-foreground">
+					No articles match that query yet. Try a different search or browse your saved stories.
+				</div>
+			)}
+		</section>
+	)
 }
